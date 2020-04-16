@@ -1,4 +1,4 @@
-#creates the training data with labels from the sample folder
+#creates the training data with labels from the sample folder, trains the classifier, and predicts the label for test data
 
 import librosa
 import matplotlib.pyplot as plt
@@ -8,16 +8,38 @@ from sklearn.preprocessing import StandardScaler
 import os
 import numpy as np
 from sklearn.svm import SVC
+from sklearn.neural_network import MLPClassifier
 
-fileOrigin = "samples"
+def detLabel(filename):
+    #determine the label of the recording
+    if "cello" in filename: 
+        label = 0
+    elif "church" in filename:
+        label = 1
+    elif "clarinet" in filename:
+        label = 2
+    elif "flute" in filename:
+        label = 3
+    elif "guitar" in filename:
+        label = 4
+    elif "harp" in filename:
+        label = 5
+    elif "marimba" in filename:
+        label = 6
+    elif "perldrop" in filename:
+        label = 7
+    elif "piano" in filename:
+        label = 8
+    elif "synlead3" in filename:
+        label = 9
+    else: #violin
+        label = 10
+    return label
+    
 
-i=1
-
-#iterate through the samples folder to get each 2 sec recording
-for recording in os.listdir(fileOrigin): 
-    #filename1 = recording
+def prepareSample(filename):
+    
     #load the file
-    filename = "samples/" + recording
     x, sr = librosa.load(filename)
     
     #ipd.Audio(x, rate=sr)
@@ -47,6 +69,20 @@ for recording in os.listdir(fileOrigin):
     mfcc_scaled.mean(axis=0)
     mfcc_scaled.std(axis=0)
     
+    return mfcc_scaled
+
+fileOrigin = "samples"
+fileTest = "test"
+
+i=1
+
+#iterate through the samples folder to get each 2 sec recording
+for recording in os.listdir(fileOrigin): 
+
+    filename = "samples/" + recording
+
+    mfcc_scaled = prepareSample(filename)
+    
     #add recording data to the x_train array (features)
     if i==1:
         x_train = mfcc_scaled
@@ -55,28 +91,8 @@ for recording in os.listdir(fileOrigin):
 
     
     #determine the label of the recording
-    if "cello" in filename: 
-        label = 0
-    elif "church" in filename:
-        label = 1
-    elif "clarinet" in filename:
-        label = 2
-    elif "flute" in filename:
-        label = 3
-    elif "guitar" in filename:
-        label = 4
-    elif "harp" in filename:
-        label = 5
-    elif "marimba" in filename:
-        label = 6
-    elif "perldrop" in filename:
-        label = 7
-    elif "piano" in filename:
-        label = 8
-    elif "synlead3" in filename:
-        label = 9
-    else: #violin
-        label = 10
+    label = detLabel(filename)
+
         
     #add recording label to the y_train array
     if i==1:
@@ -91,11 +107,51 @@ y_train = y_train.reshape((len(y_train),))
 #print(x_train) #gives (27144,12), each recording is an array of 87 rows with 312 recordings, 87*312=27144, 12 for the # of features
 #print(y_train.shape) #gives (27144,)
 
+#create test data
+#iterate through the test folder to get each 2 sec recording
+j=1
+for recording in os.listdir(fileTest): 
+
+    filename = "test/" + recording
+
+    mfcc_scaled = prepareSample(filename)
+    
+    #add recording data to the x_train array (features)
+    if j==1:
+        x_test = mfcc_scaled
+    else:
+        x_test = np.vstack([x_test,mfcc_scaled])
+        
+        
+    #determine the label of the recording
+    label = detLabel(filename)
+
+        
+    #add recording label to the y_train array
+    if j==1:
+        y_test = np.full((len(mfcc_scaled), 1), label)
+    else:
+        y_test = np.vstack((y_test,np.full((len(mfcc_scaled),1 ), label)))
+j=2
+        
+#print(x_test.shape)
 
 #train the classifier
 
 #create classifer model object
 modelSVM = SVC()
+modelNN = MLPClassifier()
 
 #train classifer
 modelSVM.fit(x_train, y_train)
+modelNN.fit(x_train, y_train)
+
+#predict
+y_predict = modelSVM.predict(x_test)
+#print(modelSVM.predict(x_test))
+#print(modelSVM.score(x_test,y_test))
+print(modelNN.score(x_test,y_test))
+
+
+
+
