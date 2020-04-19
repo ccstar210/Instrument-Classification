@@ -9,6 +9,7 @@ import os
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
+import seaborn as sn
 
 def detLabel(filename):
     #determine the label of the recording
@@ -66,10 +67,26 @@ def prepareSample(filename):
     #make features have zero mean and unit variance
     scaler = StandardScaler()
     mfcc_scaled = scaler.fit_transform(mfcc)
-    mfcc_scaled.mean(axis=0)
-    mfcc_scaled.std(axis=0)
+    #mfcc_scaled.mean(axis=0)
+    #mfcc_scaled.std(axis=0)
     
     return mfcc_scaled
+
+def plotConfMatrix(y_test,y_predict, modelType):
+    #Confusion matrix
+    conf = np.zeros((11,11), dtype=int)
+    for hit in range(len(x_test)):
+       conf[y_test[hit]][y_predict[hit]] += 1
+    
+    # Plot confusion matrix
+    fig, ax = plt.subplots(figsize=(8,8))
+    sn.set(font_scale=1.5)
+    sn.heatmap(conf, annot=True, fmt='d', ax=ax, cmap="YlGnBu")
+    ax.set_ylim(len(conf),0)
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.title('Confusion Matrix with sklearn for '+ modelType)
+    plt.show()
 
 fileOrigin = "samples"
 fileTest = "test"
@@ -132,25 +149,36 @@ for recording in os.listdir(fileTest):
         y_test = np.full((len(mfcc_scaled), 1), label)
     else:
         y_test = np.vstack((y_test,np.full((len(mfcc_scaled),1 ), label)))
-j=2
-        
-#print(x_test.shape)
+    j=2
+    
+#convert y_test to right shape    
+y_test = y_test.reshape((len(y_test),))        
 
 #train the classifier
 
 #create classifer model object
 modelSVM = SVC()
-modelNN = MLPClassifier()
+modelNN = MLPClassifier(solver='lbfgs', alpha=1e-5,hidden_layer_sizes=(15,), random_state=1)
+
+#NN, NB, logistic regression
 
 #train classifer
 modelSVM.fit(x_train, y_train)
 modelNN.fit(x_train, y_train)
 
 #predict
-y_predict = modelSVM.predict(x_test)
+y_predict_SVM = modelSVM.predict(x_test)
+y_predict_NN = modelNN.predict(x_test)
+
+
 #print(modelSVM.predict(x_test))
-#print(modelSVM.score(x_test,y_test))
+print(modelSVM.score(x_test,y_test))
 print(modelNN.score(x_test,y_test))
+
+
+#Confusion matrix
+plotConfMatrix(y_test,y_predict_SVM, "SVM")
+plotConfMatrix(y_test,y_predict_NN, "Neural Networks")
 
 
 
