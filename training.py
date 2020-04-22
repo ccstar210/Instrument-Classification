@@ -9,6 +9,12 @@ import os
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+
 import seaborn as sn
 
 def detLabel(filename):
@@ -75,20 +81,21 @@ def prepareSample(filename):
 def plotConfMatrix(y_test,y_predict, modelType):
     #Confusion matrix
     conf = np.zeros((11,11), dtype=int)
+    titles = ["Cello","Church Organ", "Clarinet", "Flute", "Guitar", "Harp", "Marimba", "Perldrop", "Piano", "Synlead3", "Violin"]
     for hit in range(len(x_test)):
        conf[y_test[hit]][y_predict[hit]] += 1
     
     # Plot confusion matrix
     fig, ax = plt.subplots(figsize=(8,8))
     sn.set(font_scale=1.5)
-    sn.heatmap(conf, annot=True, fmt='d', ax=ax, cmap="YlGnBu")
+    sn.heatmap(conf, annot=True, fmt='d', ax=ax, cmap="YlGnBu", xticklabels=titles, yticklabels=titles)
     ax.set_ylim(len(conf),0)
     plt.xlabel('Predicted')
     plt.ylabel('True')
     plt.title('Confusion Matrix with sklearn for '+ modelType)
     plt.show()
 
-fileOrigin = "samples"
+fileOrigin = "samples1"
 fileTest = "test"
 
 i=1
@@ -96,7 +103,7 @@ i=1
 #iterate through the samples folder to get each 2 sec recording
 for recording in os.listdir(fileOrigin): 
 
-    filename = "samples/" + recording
+    filename = "samples1/" + recording
 
     mfcc_scaled = prepareSample(filename)
     
@@ -158,28 +165,49 @@ y_test = y_test.reshape((len(y_test),))
 
 #create classifer model object
 modelSVM = SVC()
-modelNN = MLPClassifier(solver='lbfgs', alpha=1e-5,hidden_layer_sizes=(15,), random_state=1)
+#modelNN = MLPClassifier( alpha=1e-5,hidden_layer_sizes=(5,), random_state=1)
+#modelDT = DecisionTreeClassifier(criterion='entropy', max_depth=20)
+#modelRF = RandomForestClassifier(criterion='entropy', max_depth=30) #higher max_depth gives better accuracy
+#modelNB = MultinomialNB()
+#modelkNN = KNeighborsClassifier(n_neighbors=100, weights='distance')
+#modelGB = GradientBoostingClassifier()
 
-#NN, NB, logistic regression
 
 #train classifer
 modelSVM.fit(x_train, y_train)
-modelNN.fit(x_train, y_train)
+#modelNN.fit(x_train, y_train)
+#modelDT.fit(x_train, y_train)
+#modelRF.fit(x_train, y_train)
+#modelNB.fit(x_train, y_train)
+#modelkNN.fit(x_train, y_train)
+#modelGB.fit(x_train, y_train)
 
 #predict
 y_predict_SVM = modelSVM.predict(x_test)
-y_predict_NN = modelNN.predict(x_test)
+#y_predict_NN = modelNN.predict(x_test)
+#y_predict_DT = modelDT.predict(x_test)
+#y_predict_RF = modelRF.predict(x_test)
+#y_predict_NB = modelNB.predict(x_test)
+#y_predict_kNN = modelkNN.predict(x_test)
+#y_predict_GB = modelGB.predict(x_test)
 
 
-#print(modelSVM.predict(x_test))
 print(modelSVM.score(x_test,y_test))
-print(modelNN.score(x_test,y_test))
-
+#print(modelNN.score(x_test,y_test))
+#print(modelDT.score(x_test,y_test))
+#print(modelRF.score(x_test,y_test))
+#print(modelNB.score(x_test,y_test))
+#print(modelkNN.score(x_test, y_test))
+#print(modelGB.score(x_test, y_test))
 
 #Confusion matrix
 plotConfMatrix(y_test,y_predict_SVM, "SVM")
-plotConfMatrix(y_test,y_predict_NN, "Neural Networks")
-
+#plotConfMatrix(y_test,y_predict_NN, "Neural Networks")
+#plotConfMatrix(y_test,y_predict_DT, "Decision Trees")
+#plotConfMatrix(y_test,y_predict_RF, "Random Forest")
+#plotConfMatrix(y_test,y_predict_NB, "Naive Bayes")
+#plotConfMatrix(y_test, y_predict_kNN, "Nearest Neighbors")
+#plotConfMatrix(y_test, y_predict_GB, "Gradient Boosting")
 
 
 
