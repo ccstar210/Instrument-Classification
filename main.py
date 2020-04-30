@@ -3,8 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sn
-from sklearn import preprocessing
+import warnings
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import precision_recall_fscore_support
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
@@ -12,12 +13,12 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.model_selection import GridSearchCV
 
 n_mfcc = 12
 directory = "samples/"
+warnings.filterwarnings('ignore') # turn off warnings
 
 def extractFeatures(filename):
     # load the file
@@ -59,6 +60,7 @@ def plotConfMatrix(y_test, y_predict, modelType):
     plt.show()
 
 
+#%%
 # Load the data
 dataFile = "data.csv"
 data = pd.read_csv(dataFile, header=0)
@@ -67,8 +69,12 @@ y = data.iloc[:,1]
 
 # Separate the training data into training and false test set
 X_trn, X_tst, y_trn, y_tst = train_test_split(X, y, test_size=0.15, random_state=42, stratify=y)
+
+# Extract features
+print('Extracting features...')
 X_trn_data, y_trn_data = formatData(X_trn, y_trn)
 X_tst_data, y_tst_data = formatData(X_tst, y_tst)
+print('Feature extraction complete')
 
 #%%
 # Use cross validation grid search
@@ -79,39 +85,38 @@ models = [SVC(),
           MLPClassifier(),
           DecisionTreeClassifier(),
           MultinomialNB(),
-          KNeighborsClassifier()]
+          KNeighborsClassifier(),
+          RandomForestClassifier()]
 
 model_names = ['SVM',
                'MLP',
                'DT',
                'NB',
-               'kNN']
+               'kNN',
+               'RF']
 
 # Define hyperparameters to search
-C_range = np.arange(-1.0, 1.0) # np.arange(-4.0, 7.0)
-C_values = np.power(10.0, C_range)
-gamma_range = np.arange(-1.0, 1.0) # np.arange(-3.0, 2.0)
-gamma_values = np.power(10.0, gamma_range)
-param_SVM = {'SVM__C':C_values, 'SVM__gamma':gamma_values}
-
-alpha_range = np.arange(-1.0, 0.0) # np.arange(2.0, 2.0, 1.0)
-alpha_values = np.power(10.0, C_range)
-param_MLP = {'MLP__alpha':alpha_values}
-
-param_DT = {'DT__max_depth':np.arange(1, 2)} # np.arange(1, 11)
-param_NB = {'NB__alpha':np.arange(1,2)/100} # np.arange(1,10)/100
-param_kNN = {'kNN__n_neighbors':np.arange(10,11)} # np.arange(1,30,2)
+param_SVM = {'SVM__C' : np.power(10.0, np.arange(-1.0, 5.0)),
+             'SVM__gamma' : np.power(10.0, np.arange(-3.0, 1.0))}
+param_MLP = {'MLP__alpha' : np.power(10.0, np.arange(-3.0, 1.0))}
+param_DT = {'DT__max_depth' : np.arange(1, 20, 2)}
+param_NB = {'NB__alpha' : np.arange(1, 10)/100}
+param_kNN = {'kNN__n_neighbors' : np.arange(1, 10, 2)}
+param_RF = {'RF__n_estimators' : np.arange(100, 500, 100),
+            'RF__max_depth' : np.arange(1, 20, 2)}
 
 parameters = [param_SVM,
               param_MLP,
               param_DT,
               param_NB,
-              param_kNN]
+              param_kNN,
+              param_RF]
 
 scalers = [StandardScaler(),
            StandardScaler(),
            StandardScaler(),
            MinMaxScaler(),
+           StandardScaler(),
            StandardScaler()]
  
 for model, model_name, parameter, scaler in zip(models, model_names, parameters, scalers):
@@ -122,8 +127,16 @@ for model, model_name, parameter, scaler in zip(models, model_names, parameters,
     grid = GridSearchCV(pipeline, param_grid=parameter, cv=5)    
     grid.fit(X_trn_data, y_trn_data)
 
-    # Get the accuracy         
-    print(model_name + " score = %3.2f" %(grid.score(X_tst_data, y_tst_data)))
+    # Get the accuracy
+    score = grid.score(X_tst_data, y_tst_data)
+    y_tst_predict = grid.predict(X_tst_data)
+    
+    # Print the results
+    print('')
+    print(model_name + " accuracy = %3.2f" %(score))
     print(grid.best_params_)
-    #plotConfMatrix(y_tst_data, y_predict, model_name)
+    print('precision, recall, fscore = ')
+    print(precision_recall_fscore_support(y_tst_data, y_tst_predict, average='macro'))
+    
+    #plotConfMatrix(y_tst_data, y_tst_predict, model_name)
     
