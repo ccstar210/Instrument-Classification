@@ -16,7 +16,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.model_selection import GridSearchCV
 
-n_mfcc = 12
+n_mfcc = 13
 directory = "samples/"
 warnings.filterwarnings('ignore') # turn off warnings
 
@@ -35,9 +35,13 @@ def formatData(X, y):
     y_data = []
     for sample, label in zip(X, y):
         features = extractFeatures(sample)
-        X_data.append(features.mean(0).reshape((1, n_mfcc)))
+        mfcc = features.mean(0).reshape((1, n_mfcc))
+        var = np.var(features, axis=0).reshape((1, n_mfcc))
+        #mfcc_delta = librosa.feature.delta(features).mean(0).reshape((1, n_mfcc))
+        #mfcc_delta2 = librosa.feature.delta(features, order=2).mean(0).reshape((1, n_mfcc))
+        X_data.append(np.hstack((mfcc, var))) #np.hstack((mfcc, mfcc_delta, mfcc_delta2))
         y_data.append(label)
-    X_data = np.reshape(X_data, (-1, n_mfcc))
+    X_data = np.reshape(X_data, (-1, 2*n_mfcc)) #3*n_mfcc
         
     return np.array(X_data), np.array(y_data)
 
@@ -86,36 +90,40 @@ models = [SVC(),
           DecisionTreeClassifier(),
           MultinomialNB(),
           KNeighborsClassifier(),
-          RandomForestClassifier()]
+          RandomForestClassifier(),
+          GradientBoostingClassifier()]
 
 model_names = ['SVM',
                'MLP',
                'DT',
                'NB',
                'kNN',
-               'RF']
+               'RF',
+               'GB']
 
 # Define hyperparameters to search
-param_SVM = {'SVM__C' : np.power(10.0, np.arange(-1.0, 5.0)),
+param_SVM = {'SVM__C' : np.power(10.0, np.arange(-1.0, 4.0)),
              'SVM__gamma' : np.power(10.0, np.arange(-3.0, 1.0))}
 param_MLP = {'MLP__alpha' : np.power(10.0, np.arange(-3.0, 1.0))}
 param_DT = {'DT__max_depth' : np.arange(1, 20, 2)}
 param_NB = {'NB__alpha' : np.arange(1, 10)/100}
 param_kNN = {'kNN__n_neighbors' : np.arange(1, 10, 2)}
-param_RF = {'RF__n_estimators' : np.arange(100, 500, 100),
-            'RF__max_depth' : np.arange(1, 20, 2)}
+param_RF = {'RF__n_estimators' : np.arange(100, 1000, 100)}
+param_GB = {'GB__n_estimators' : np.arange(100, 1000, 100)}
 
 parameters = [param_SVM,
               param_MLP,
               param_DT,
               param_NB,
               param_kNN,
-              param_RF]
+              param_RF,
+              param_GB]
 
 scalers = [StandardScaler(),
            StandardScaler(),
            StandardScaler(),
            MinMaxScaler(),
+           StandardScaler(),
            StandardScaler(),
            StandardScaler()]
  

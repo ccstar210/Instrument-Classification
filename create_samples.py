@@ -10,7 +10,7 @@ import os
 fileOrigin = "Recordings"
 fileDestination = "samples"
 sr_resample = 16000 # resample to 16 kHz
-sampleTime = 2 # length of samples in seconds
+sampleTime = 1 # length of samples in seconds
 trimThreshold = 30 # threshold for silence in decibels
 
 # For each file
