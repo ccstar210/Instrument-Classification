@@ -18,7 +18,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
 
-n_mfcc = 20
+n_mfcc = 12
 directory = "samples/"
 warnings.filterwarnings('ignore') # turn off warnings
 random = 42
@@ -32,19 +32,25 @@ def extractFeatures(filename):
     return mfcc
 
 
-def formatData(X, y):
+def formatData(X, y, i):
     # Format the MFCC data
     X_data = []
     y_data = []
-    for sample, label in zip(X, y):
-        features = extractFeatures(sample)
-        mfcc = features.mean(0).reshape((1, n_mfcc))
-        var = np.var(features, axis=0).reshape((1, n_mfcc))
-        #mfcc_delta = librosa.feature.delta(features).mean(0).reshape((1, n_mfcc))
-        #mfcc_delta2 = librosa.feature.delta(features, order=2).mean(0).reshape((1, n_mfcc))
-        X_data.append(np.hstack((mfcc, var))) #np.hstack((mfcc, mfcc_delta, mfcc_delta2))
-        y_data.append(label)
-    X_data = np.reshape(X_data, (-1, 2*n_mfcc)) #3*n_mfcc
+    if i==0:
+        for sample, label in zip(X, y):
+            features = extractFeatures(sample)
+            mfcc = np.mean(features, axis=0).reshape((1, n_mfcc))
+            X_data.append(mfcc)
+            y_data.append(label)
+        X_data = np.reshape(X_data, (-1, n_mfcc))
+    else:
+        for sample, label in zip(X, y):
+            features = extractFeatures(sample)
+            mfcc = np.mean(features, axis=0).reshape((1, n_mfcc))
+            var = np.var(features, axis=0).reshape((1, n_mfcc))
+            X_data.append(np.hstack((mfcc, var)))
+            y_data.append(label)
+        X_data = np.reshape(X_data, (-1, 2*n_mfcc))
         
     return np.array(X_data), np.array(y_data)
 
@@ -101,11 +107,20 @@ y = data.iloc[:,1]
 # Separate the training data into training and false test set
 X_trn, X_tst, y_trn, y_tst = train_test_split(X, y, test_size=0.15, random_state=42, stratify=y)
 
-
 # Extract features
+all_X_trn = []
+all_y_trn = []
+all_X_tst = []
+all_y_tst = []
+numFeatureSettings = 2
 print('Extracting features...')
-X_trn_data, y_trn_data = formatData(X_trn, y_trn)
-X_tst_data, y_tst_data = formatData(X_tst, y_tst)
+for i in range(numFeatureSettings):
+    X_trn_data, y_trn_data = formatData(X_trn, y_trn, i)
+    X_tst_data, y_tst_data = formatData(X_tst, y_tst, i)
+    all_X_trn.append(X_trn_data)
+    all_y_trn.append(y_trn_data)
+    all_X_tst.append(X_tst_data)
+    all_y_tst.append(y_tst_data)
 print('Feature extraction complete')
 
 
@@ -118,17 +133,17 @@ models = [SVC(),
           MLPClassifier(),
           DecisionTreeClassifier(),
           MultinomialNB(),
-          KNeighborsClassifier()]
-          #RandomForestClassifier()
-          #GradientBoostingClassifier()]
+          KNeighborsClassifier(),
+          RandomForestClassifier(),
+          GradientBoostingClassifier()]
 
 model_names = ['SVM',
                'MLP',
                'DT',
                'NB',
-               'kNN']
-               #'RF'
-               #'GB']
+               'kNN',
+               'RF',
+               'GB']
 
 # Define hyperparameters to search
 param_SVM = {'SVM__C' : np.power(10.0, np.arange(-1.0, 4.0)),
@@ -145,39 +160,43 @@ parameters = [param_SVM,
               param_MLP,
               param_DT,
               param_NB,
-              param_kNN]
-              #param_RF,
-              #param_GB]
+              param_kNN,
+              param_RF,
+              param_GB]
 
 scalers = [StandardScaler(),
            StandardScaler(),
            StandardScaler(),
            MinMaxScaler(),
+           StandardScaler(),
+           StandardScaler(),
            StandardScaler()]
-           #StandardScaler(),
-           #StandardScaler()]
- 
-for model, model_name, parameter, scaler in zip(models, model_names, parameters, scalers):
-    # Create the pipeline
-    pipeline = Pipeline([('scaler', scaler), (model_name, model)])
-     
-    # Create the grid search
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=random) #5 fold cross validation   
-    grid = GridSearchCV(pipeline, param_grid=parameter, cv=cv)
-    grid.fit(X_trn_data, y_trn_data)
 
-    # Get the accuracy
-    score = grid.score(X_tst_data, y_tst_data)
-    y_tst_predict = grid.predict(X_tst_data)
-    
-    # Print the results
+idx = 0
+for X_trn_data, y_trn_data, X_tst_data, y_tst_data in zip(all_X_trn, all_y_trn, all_X_tst, all_y_tst):
     print('')
-    print(model_name + " accuracy = %3.2f" %(score))
-    print(grid.best_params_)
-    print('precision, recall, fscore = ')
-    print(precision_recall_fscore_support(y_tst_data, y_tst_predict, average='macro'))
+    print('Feature version ' + str(idx))
+    idx = idx + 1
+    for model, model_name, parameter, scaler in zip(models, model_names, parameters, scalers):
+        # Create the pipeline
+        pipeline = Pipeline([('scaler', scaler), (model_name, model)])
+         
+        # Create the grid search
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=random) #5 fold cross validation   
+        grid = GridSearchCV(pipeline, param_grid=parameter, cv=cv)
+        grid.fit(X_trn_data, y_trn_data)
     
-    plotLearningCurve(grid.best_estimator_, X_trn_data, y_trn_data, cv, model_name)
-    
-    #plotConfMatrix(y_tst_data, y_tst_predict, model_name)
+        # Get the accuracy
+        score = grid.score(X_tst_data, y_tst_data)
+        y_tst_predict = grid.predict(X_tst_data)
+        
+        # Print the results
+        #print('')
+        print(model_name + ' accuracy = %3.2f' %(score))
+        #print(grid.best_params_)
+        #print('precision, recall, fscore = ')
+        #print(precision_recall_fscore_support(y_tst_data, y_tst_predict, average='macro'))
+        
+        #plotLearningCurve(grid.best_estimator_, X_trn_data, y_trn_data, cv, model_name)        
+        plotConfMatrix(y_tst_data, y_tst_predict, model_name)
     

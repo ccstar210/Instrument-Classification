@@ -10,7 +10,8 @@ import os
 fileOrigin = "Recordings"
 fileDestination = "samples"
 sr_resample = 16000 # resample to 16 kHz
-sampleTime = 1 # length of samples in seconds
+size = 2 # length of samples in seconds
+step = 1 # length of time in seconds to overlap
 trimThreshold = 30 # threshold for silence in decibels
 
 # For each file
@@ -31,9 +32,19 @@ for filename in os.listdir(fileOrigin):
 #    plt.show()
     
     # Cut into 2-second samples
-    numSamples = math.floor((len(yt)/sr)/sampleTime)
-    ysplit = np.array_split(yt[:numSamples*sampleTime*sr],numSamples)
+    parts = []
+    start = 0
+    while ((start+size)*sr <= len(yt)):
+        parts.append(yt[start*sr:(start+size)*sr])
+        start=start+step
+    #numSamples = math.floor((len(yt)/sr)/sampleTime)
+    #ysplit = np.array_split(yt[:numSamples*sampleTime*sr],numSamples)
     
     # Save short samples
-    for i in range(len(ysplit)):
-        sf.write(fileDestination + '/' + filename.split('.')[0] + '_' + str(i) + '.wav', ysplit[i], sr)
+    idx = 0
+    for part in parts:
+        sf.write(fileDestination + '/' + filename.split('.')[0] + '_' + str(idx) + '.wav', part, sr)
+        idx = idx + 1
+    
+    #for i in range(len(ysplit)):
+        #sf.write(fileDestination + '/' + filename.split('.')[0] + '_' + str(i) + '.wav', ysplit[i], sr)
