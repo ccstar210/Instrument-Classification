@@ -4,11 +4,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sn
 import warnings
+from itertools import cycle
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import learning_curve, StratifiedKFold
-from sklearn.metrics import precision_recall_fscore_support
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.metrics import precision_recall_fscore_support, roc_curve, auc, roc_auc_score
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, label_binarize
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
@@ -95,7 +97,54 @@ def plotLearningCurve(estimator, X, y, cv, modelType):
     plt.legend(loc="best")
     plt.show()
 
+#based on code from https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html
+def plotROCCurve(estimator, X_train, y_train, X_test, y_test, modelType):
+    #binarize output
+    y_train_bin = label_binarize(y_train, classes=[0,1,2,3,4,5,6,7,8,9,10])
+    y_test_bin = label_binarize(y_test, classes=[0,1,2,3,4,5,6,7,8,9,10])
+    numClasses = y_train_bin.shape[1]
+    #one vs all classification
+    classifier = OneVsRestClassifier(estimator)
+    y_score = classifier.fit(X_train, y_train_bin).decision_function(X_test)
+    #print(y_test_bin.shape)
+    #print(y_score.shape)
+    
+    #get the ROC curve and ROC area for each class
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+    for i in range(numClasses):
+        fpr[i], tpr[i], _ = roc_curve(y_test_bin[:,i], y_score[:,i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+      
+    print('hello')
+    #get micro-average ROC curve and ROC area
+    fpr["micro"], tpr["micro"], _ = roc_curve(y_test_bin.ravel(), y_score.ravel())
+    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+    print('hello1')
+    #plot ROC curve for all classes
+    fig, ax = plt.subplots(figsize=(8,8))
+    plt.grid()
+    lw=2
+    plt.plot(fpr["micro"], tpr["micro"],
+         label='micro-average ROC curve (area = {0:0.2f})'
+               ''.format(roc_auc["micro"]),
+         color='deeppink', linestyle=':', linewidth=4)
+    print('hello2')
+    colors = cycle(['red','goldenrod','darkorange', 'yellow', 'olive', 'lime', 'green','cornflowerblue', 'aqua','blue', 'darkviolet'])
+    for i, color in zip(range(numClasses), colors):
+        
+        plt.plot(fpr[i], tpr[i], color=color, lw=lw,
+             label='ROC curve of class {0} (area = {1:0.2f})'
+             ''.format(i, roc_auc[i]))
+        
 
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlabel('False Positives Rate')
+    plt.ylabel('True Positives Rate')
+    plt.title('ROC Curve with sklearn for ' + modelType)
+    plt.legend(loc="best")
+    plt.show()
 
 #%%
 # Load the data
@@ -106,6 +155,7 @@ y = data.iloc[:,1]
 
 # Separate the training data into training and false test set
 X_trn, X_tst, y_trn, y_tst = train_test_split(X, y, test_size=0.15, random_state=42, stratify=y)
+
 
 # Extract features
 all_X_trn = []
@@ -198,5 +248,6 @@ for X_trn_data, y_trn_data, X_tst_data, y_tst_data in zip(all_X_trn, all_y_trn, 
         #print(precision_recall_fscore_support(y_tst_data, y_tst_predict, average='macro'))
         
         #plotLearningCurve(grid.best_estimator_, X_trn_data, y_trn_data, cv, model_name)        
-        plotConfMatrix(y_tst_data, y_tst_predict, model_name)
+        #plotConfMatrix(y_tst_data, y_tst_predict, model_name)
+        plotROCCurve(grid.best_estimator_, X_trn_data, y_trn_data, X_tst_data, y_tst_data, model_name)
     
