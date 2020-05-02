@@ -5,6 +5,8 @@ import pandas as pd
 import seaborn as sn
 import warnings
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import learning_curve, StratifiedKFold
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.pipeline import Pipeline
@@ -14,12 +16,12 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import learning_curve, KFold
 
-n_mfcc = 13
+
+n_mfcc = 20
 directory = "samples/"
 warnings.filterwarnings('ignore') # turn off warnings
+random = 42
 
 def extractFeatures(filename):
     # load the file
@@ -64,15 +66,24 @@ def plotConfMatrix(y_test, y_predict, modelType):
     plt.title('Confusion Matrix with sklearn for ' + modelType)
     plt.show()
     
-def plotLearningCurve(estimator, X, y, modelType):
-    #cv = KFold(n_splits=5)
-    train_sizes, train_scores, test_scores = learning_curve(estimator,X,y) 
+def plotLearningCurve(estimator, X, y, cv, modelType):
+    train_sizes, train_scores, test_scores = learning_curve(estimator, X, y, cv=cv, shuffle=True, random_state=random)
+    train_scores = 100*train_scores
+    test_scores = 100*test_scores
     train_scores_mean = np.mean(train_scores, axis=1)
+    train_scores_std = np.std(train_scores, axis=1)
     test_scores_mean = np.mean(test_scores, axis=1)
-
-    plt.plot(train_sizes, train_scores_mean, label = 'Training error')
-    plt.plot(train_sizes, test_scores_mean, label = 'Test error')
-    plt.ylabel('Accuracy')
+    test_scores_std = np.std(test_scores, axis=1)
+    
+    fig, ax = plt.subplots(figsize=(8,8))
+    plt.grid()
+    plt.plot(train_sizes, train_scores_mean, label = 'Training accuracy')
+    plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
+                     train_scores_mean + train_scores_std, alpha=0.1)    
+    plt.plot(train_sizes, test_scores_mean, label = 'Cross-validation accuracy')
+    plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
+                     test_scores_mean + test_scores_std, alpha=0.1)
+    plt.ylabel('Accuracy (%)')
     plt.xlabel('Training set size')
     plt.title('Learning Curves with sklearn for ' + modelType)
     plt.legend(loc="best")
@@ -107,17 +118,17 @@ models = [SVC(),
           MLPClassifier(),
           DecisionTreeClassifier(),
           MultinomialNB(),
-          KNeighborsClassifier(),
-          RandomForestClassifier(),
-          GradientBoostingClassifier()]
+          KNeighborsClassifier()]
+          #RandomForestClassifier()
+          #GradientBoostingClassifier()]
 
 model_names = ['SVM',
                'MLP',
                'DT',
                'NB',
-               'kNN',
-               'RF',
-               'GB']
+               'kNN']
+               #'RF'
+               #'GB']
 
 # Define hyperparameters to search
 param_SVM = {'SVM__C' : np.power(10.0, np.arange(-1.0, 4.0)),
@@ -126,33 +137,33 @@ param_MLP = {'MLP__alpha' : np.power(10.0, np.arange(-3.0, 1.0))} #'MLP_layers':
 param_DT = {'DT__max_depth' : np.arange(1, 20, 2)}
 param_NB = {'NB__alpha' : np.arange(1, 10)/100}
 param_kNN = {'kNN__n_neighbors' : np.arange(1, 10, 2)}
-param_RF = {'RF__n_estimators' : np.arange(100, 500, 100),
+param_RF = {'RF__n_estimators' : np.arange(100, 500, 200),
             'RF__max_depth' : np.arange(1, 20, 2)}
-param_GB = {'GB__learning_rate': np.arange(0.1, 0.8, 0.1),
-            'GB__max_depth' : np.arange(1,10, 2)} #'GB__n_estimators' : np.arange(50, 200, 50),
+param_GB = {'GB__learning_rate': np.arange(0.1, 0.5, 0.1)} #'GB__n_estimators' : np.arange(50, 200, 50),
 
 parameters = [param_SVM,
               param_MLP,
               param_DT,
               param_NB,
-              param_kNN,
-              param_RF,
-              param_GB]
+              param_kNN]
+              #param_RF,
+              #param_GB]
 
 scalers = [StandardScaler(),
            StandardScaler(),
            StandardScaler(),
            MinMaxScaler(),
-           StandardScaler(),
-           StandardScaler(),
            StandardScaler()]
+           #StandardScaler(),
+           #StandardScaler()]
  
 for model, model_name, parameter, scaler in zip(models, model_names, parameters, scalers):
     # Create the pipeline
     pipeline = Pipeline([('scaler', scaler), (model_name, model)])
      
     # Create the grid search
-    grid = GridSearchCV(pipeline, param_grid=parameter, cv=5) #5 fold cross validation   
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=random) #5 fold cross validation   
+    grid = GridSearchCV(pipeline, param_grid=parameter, cv=cv)
     grid.fit(X_trn_data, y_trn_data)
 
     # Get the accuracy
@@ -166,7 +177,7 @@ for model, model_name, parameter, scaler in zip(models, model_names, parameters,
     print('precision, recall, fscore = ')
     print(precision_recall_fscore_support(y_tst_data, y_tst_predict, average='macro'))
     
-    #plotLearningCurve(grid, X_trn_data, y_trn_data, model_name)
+    plotLearningCurve(grid.best_estimator_, X_trn_data, y_trn_data, cv, model_name)
     
     #plotConfMatrix(y_tst_data, y_tst_predict, model_name)
     
