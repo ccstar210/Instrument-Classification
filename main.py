@@ -15,6 +15,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import learning_curve, KFold
 
 n_mfcc = 12
 directory = "samples/"
@@ -58,6 +59,21 @@ def plotConfMatrix(y_test, y_predict, modelType):
     plt.ylabel('True')
     plt.title('Confusion Matrix with sklearn for ' + modelType)
     plt.show()
+    
+def plotLearningCurve(estimator, X, y, modelType):
+    #cv = KFold(n_splits=5)
+    train_sizes, train_scores, test_scores = learning_curve(estimator,X,y) 
+    train_scores_mean = np.mean(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+
+    plt.plot(train_sizes, train_scores_mean, label = 'Training error')
+    plt.plot(train_sizes, test_scores_mean, label = 'Test error')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Training set size')
+    plt.title('Learning Curves with sklearn for ' + modelType)
+    plt.legend(loc="best")
+    plt.show()
+
 
 
 #%%
@@ -70,11 +86,13 @@ y = data.iloc[:,1]
 # Separate the training data into training and false test set
 X_trn, X_tst, y_trn, y_tst = train_test_split(X, y, test_size=0.15, random_state=42, stratify=y)
 
+
 # Extract features
 print('Extracting features...')
 X_trn_data, y_trn_data = formatData(X_trn, y_trn)
 X_tst_data, y_tst_data = formatData(X_tst, y_tst)
 print('Feature extraction complete')
+
 
 #%%
 # Use cross validation grid search
@@ -86,36 +104,42 @@ models = [SVC(),
           DecisionTreeClassifier(),
           MultinomialNB(),
           KNeighborsClassifier(),
-          RandomForestClassifier()]
+          RandomForestClassifier(),
+          GradientBoostingClassifier()]
 
 model_names = ['SVM',
                'MLP',
                'DT',
                'NB',
                'kNN',
-               'RF']
+               'RF',
+               'GB']
 
 # Define hyperparameters to search
 param_SVM = {'SVM__C' : np.power(10.0, np.arange(-1.0, 5.0)),
              'SVM__gamma' : np.power(10.0, np.arange(-3.0, 1.0))}
-param_MLP = {'MLP__alpha' : np.power(10.0, np.arange(-3.0, 1.0))}
+param_MLP = {'MLP__alpha' : np.power(10.0, np.arange(-3.0, 1.0))} #'MLP_layers': np.linspace((5,),(100,),5)
 param_DT = {'DT__max_depth' : np.arange(1, 20, 2)}
 param_NB = {'NB__alpha' : np.arange(1, 10)/100}
 param_kNN = {'kNN__n_neighbors' : np.arange(1, 10, 2)}
 param_RF = {'RF__n_estimators' : np.arange(100, 500, 100),
             'RF__max_depth' : np.arange(1, 20, 2)}
+param_GB = {'GB__learning_rate': np.arange(0.1, 0.8, 0.1),
+            'GB__max_depth' : np.arange(1,10, 2)} #'GB__n_estimators' : np.arange(50, 200, 50),
 
 parameters = [param_SVM,
               param_MLP,
               param_DT,
               param_NB,
               param_kNN,
-              param_RF]
+              param_RF,
+              param_GB]
 
 scalers = [StandardScaler(),
            StandardScaler(),
            StandardScaler(),
            MinMaxScaler(),
+           StandardScaler(),
            StandardScaler(),
            StandardScaler()]
  
@@ -124,7 +148,7 @@ for model, model_name, parameter, scaler in zip(models, model_names, parameters,
     pipeline = Pipeline([('scaler', scaler), (model_name, model)])
      
     # Create the grid search
-    grid = GridSearchCV(pipeline, param_grid=parameter, cv=5)    
+    grid = GridSearchCV(pipeline, param_grid=parameter, cv=5) #5 fold cross validation   
     grid.fit(X_trn_data, y_trn_data)
 
     # Get the accuracy
@@ -137,6 +161,8 @@ for model, model_name, parameter, scaler in zip(models, model_names, parameters,
     print(grid.best_params_)
     print('precision, recall, fscore = ')
     print(precision_recall_fscore_support(y_tst_data, y_tst_predict, average='macro'))
+    
+    #plotLearningCurve(grid, X_trn_data, y_trn_data, model_name)
     
     #plotConfMatrix(y_tst_data, y_tst_predict, model_name)
     

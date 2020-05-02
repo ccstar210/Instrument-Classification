@@ -157,6 +157,9 @@ let-violin_9.wav,10
 sea-cello_0.wav,0
 sea-cello_1.wav,0
 sea-cello_2.wav,0
+sea-church_0.wav,1
+sea-church_1.wav,1
+sea-church_2.wav,1
 sea-clarinet_0.wav,2
 sea-clarinet_1.wav,2
 sea-clarinet_2.wav,2
@@ -172,9 +175,6 @@ sea-harp_2.wav,5
 sea-marimba_0.wav,6
 sea-marimba_1.wav,6
 sea-marimba_2.wav,6
-sea-organ_0.wav,10
-sea-organ_1.wav,10
-sea-organ_2.wav,10
 sea-perldrop_0.wav,7
 sea-perldrop_1.wav,7
 sea-perldrop_2.wav,7
@@ -195,11 +195,11 @@ styrienne-cello_4.wav,0
 styrienne-cello_5.wav,0
 styrienne-cello_6.wav,0
 styrienne-cello_7.wav,0
-styrienne-chuch organ_0.wav,10
-styrienne-chuch organ_1.wav,10
-styrienne-chuch organ_2.wav,10
-styrienne-chuch organ_3.wav,10
-styrienne-chuch organ_4.wav,10
+styrienne-church organ_0.wav,1
+styrienne-church organ_1.wav,1
+styrienne-church organ_2.wav,1
+styrienne-church organ_3.wav,1
+styrienne-church organ_4.wav,1
 styrienne-clarinet_0.wav,2
 styrienne-clarinet_1.wav,2
 styrienne-clarinet_2.wav,2
@@ -310,3 +310,4 @@ tarantella-violin_0.wav,10
 tarantella-violin_1.wav,10
 tarantella-violin_2.wav,10
 tarantella-violin_3.wav,10
+tarantella-violin_4.wav,10
