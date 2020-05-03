@@ -97,54 +97,27 @@ def plotLearningCurve(estimator, X, y, cv, modelType):
     plt.legend(loc="best")
     plt.show()
 
-#based on code from https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html
+
 def plotROCCurve(estimator, X_train, y_train, X_test, y_test, modelType):
-    #binarize output
     y_train_bin = label_binarize(y_train, classes=[0,1,2,3,4,5,6,7,8,9,10])
     y_test_bin = label_binarize(y_test, classes=[0,1,2,3,4,5,6,7,8,9,10])
-    numClasses = y_train_bin.shape[1]
-    #one vs all classification
-    classifier = OneVsRestClassifier(estimator)
-    y_score = classifier.fit(X_train, y_train_bin).decision_function(X_test)
-    #print(y_test_bin.shape)
-    #print(y_score.shape)
     
-    #get the ROC curve and ROC area for each class
+    classifier = OneVsRestClassifier(estimator)
+    if hasattr(classifier, "decision_function"):
+        y_score = classifier.fit(X_train, y_train_bin).decision_function(X_test)
+    else:
+        y_score = classifier.fit(X_train, y_train_bin).predict_proba(X_test)
+    
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
-    for i in range(numClasses):
-        fpr[i], tpr[i], _ = roc_curve(y_test_bin[:,i], y_score[:,i])
-        roc_auc[i] = auc(fpr[i], tpr[i])
-      
-    print('hello')
-    #get micro-average ROC curve and ROC area
+
+    # get micro-average ROC curve and ROC area
     fpr["micro"], tpr["micro"], _ = roc_curve(y_test_bin.ravel(), y_score.ravel())
     roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
-    print('hello1')
-    #plot ROC curve for all classes
-    fig, ax = plt.subplots(figsize=(8,8))
-    plt.grid()
-    lw=2
-    plt.plot(fpr["micro"], tpr["micro"],
-         label='micro-average ROC curve (area = {0:0.2f})'
-               ''.format(roc_auc["micro"]),
-         color='deeppink', linestyle=':', linewidth=4)
-    print('hello2')
-    colors = cycle(['red','goldenrod','darkorange', 'yellow', 'olive', 'lime', 'green','cornflowerblue', 'aqua','blue', 'darkviolet'])
-    for i, color in zip(range(numClasses), colors):
-        
-        plt.plot(fpr[i], tpr[i], color=color, lw=lw,
-             label='ROC curve of class {0} (area = {1:0.2f})'
-             ''.format(i, roc_auc[i]))
-        
-
-    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-    plt.xlabel('False Positives Rate')
-    plt.ylabel('True Positives Rate')
-    plt.title('ROC Curve with sklearn for ' + modelType)
-    plt.legend(loc="best")
-    plt.show()
+    
+    plt.plot(fpr["micro"], tpr["micro"], label=modelType + ' (area = {0:0.4f})'
+               ''.format(roc_auc["micro"]), linewidth=4, alpha=0.7)
 
 #%%
 # Load the data
@@ -196,15 +169,16 @@ model_names = ['SVM',
                'GB']
 
 # Define hyperparameters to search
-param_SVM = {'SVM__C' : np.power(10.0, np.arange(-1.0, 4.0)),
-             'SVM__gamma' : np.power(10.0, np.arange(-3.0, 1.0))}
-param_MLP = {'MLP__alpha' : np.power(10.0, np.arange(-3.0, 1.0))} #'MLP_layers': np.linspace((5,),(100,),5)
-param_DT = {'DT__max_depth' : np.arange(1, 20, 2)}
-param_NB = {'NB__alpha' : np.arange(1, 10)/100}
-param_kNN = {'kNN__n_neighbors' : np.arange(1, 10, 2)}
-param_RF = {'RF__n_estimators' : np.arange(100, 500, 200),
-            'RF__max_depth' : np.arange(1, 20, 2)}
-param_GB = {'GB__learning_rate': np.arange(0.1, 0.5, 0.1)} #'GB__n_estimators' : np.arange(50, 200, 50),
+param_SVM = {'SVM__C': np.power(10.0, np.arange(-1.0, 4.0)),
+             'SVM__gamma': np.power(10.0, np.arange(-3.0, 1.0))}
+param_MLP = {'MLP__alpha': np.power(10.0, np.arange(-3.0, 1.0))} #'MLP_layers': np.linspace((5,),(100,),5)
+param_DT = {'DT__max_depth': np.arange(1, 20, 2)}
+param_NB = {'NB__alpha': np.arange(1, 10)/100}
+param_kNN = {'kNN__n_neighbors': np.arange(1, 10, 2)}
+param_RF = {'RF__n_estimators': np.arange(100, 500, 200),
+            'RF__max_depth': np.arange(1, 20, 2)}
+param_GB = {'GB__learning_rate': np.arange(0.1, 0.5, 0.1),
+            'GB__max_depth': np.arange(1,6)} #'GB__n_estimators' : np.arange(50, 200, 50),
 
 parameters = [param_SVM,
               param_MLP,
@@ -223,6 +197,7 @@ scalers = [StandardScaler(),
            StandardScaler()]
 
 idx = 0
+bestEstimators = []
 for X_trn_data, y_trn_data, X_tst_data, y_tst_data in zip(all_X_trn, all_y_trn, all_X_tst, all_y_tst):
     print('')
     print('Feature version ' + str(idx))
@@ -241,13 +216,32 @@ for X_trn_data, y_trn_data, X_tst_data, y_tst_data in zip(all_X_trn, all_y_trn, 
         y_tst_predict = grid.predict(X_tst_data)
         
         # Print the results
-        #print('')
+        print('')
         print(model_name + ' accuracy = %3.2f' %(score))
-        #print(grid.best_params_)
-        #print('precision, recall, fscore = ')
-        #print(precision_recall_fscore_support(y_tst_data, y_tst_predict, average='macro'))
+        print(grid.best_params_)
+        print('precision, recall, fscore = ')
+        print(precision_recall_fscore_support(y_tst_data, y_tst_predict, average='macro'))
         
-        #plotLearningCurve(grid.best_estimator_, X_trn_data, y_trn_data, cv, model_name)        
-        #plotConfMatrix(y_tst_data, y_tst_predict, model_name)
-        plotROCCurve(grid.best_estimator_, X_trn_data, y_trn_data, X_tst_data, y_tst_data, model_name)
-    
+        plotLearningCurve(grid.best_estimator_, X_trn_data, y_trn_data, cv, model_name)        
+        plotConfMatrix(y_tst_data, y_tst_predict, model_name)
+        bestEstimators.append(grid.best_estimator_) # Save the best estimator from each model
+        
+#%%        
+# Plot each model's best ROC curve for each feature set
+idx = 0
+fig, ax = plt.subplots(figsize=(18,8))
+plt.grid()
+
+for X_trn_data, y_trn_data, X_tst_data, y_tst_data in zip(all_X_trn, all_y_trn, all_X_tst, all_y_tst):
+    plt.subplot(1,2,idx+1)
+    for estimator, model_name in zip(bestEstimators, model_names):    
+        plotROCCurve(estimator, X_trn_data, y_trn_data, X_tst_data, y_tst_data, model_name)
+    plt.plot([0, 1], [0, 1], color='navy', lw=4, linestyle='--', alpha=0.7)
+    plt.xlabel('False Positives Rate')
+    plt.ylabel('True Positives Rate')
+    plt.title('ROC curves for feature set ' + str(idx))
+    plt.legend(loc="best")    
+    plt.tight_layout()
+    idx += 1
+plt.show()
+

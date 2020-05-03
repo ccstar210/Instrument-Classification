@@ -45,6 +45,3 @@ for filename in os.listdir(fileOrigin):
     for part in parts:
         sf.write(fileDestination + '/' + filename.split('.')[0] + '_' + str(idx) + '.wav', part, sr)
         idx = idx + 1
-    
-    #for i in range(len(ysplit)):
-        #sf.write(fileDestination + '/' + filename.split('.')[0] + '_' + str(i) + '.wav', ysplit[i], sr)
