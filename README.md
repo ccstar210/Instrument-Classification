@@ -1,19 +1,19 @@
 # Instrument/Timbre Classification using Machine Learning
 
-##Introduction
+## Introduction
 project goal, what problems does it solve, 2-3 sen
 
-##Technologies
+## Technologies
 languages and versions
 
 how to run project
 
-##Table of Contents
+## Table of Contents
 * [Dataset]
 * [Feature Extraction]
 
-##Dataset
+## Dataset
 
-##Feature Extraction
+## Feature Extraction
 
-##Sources
+## Sources
