@@ -1,19 +1,27 @@
 # Instrument/Timbre Classification using Machine Learning
 
 ## Introduction
-project goal, what problems does it solve, 2-3 sen
+Audio-based instrument classifier that identifies an instrument based on its timbre given a short sample of music.
 
 ## Technologies
-languages and versions
-
-how to run project
+-Python: 3.7.4
+-Python libraries: numpy, matplotlib, pandas, seaborn, sklearn, librosa, soundfile
 
 ## Table of Contents
-* [Dataset]
-* [Feature Extraction]
+* [Background](#background)
+* [Dataset](#dataset)
+* [Data Preprocessing](#data preprocessing)
+* [Machine Learning Methods](#machine learning methods)
+* [Sources](#sources)
+
+## Background
 
 ## Dataset
 
-## Feature Extraction
+## Data Preprocessing
+-feature extraction
+-label encoding
+
+## Machine Learning Methods
 
 ## Sources
