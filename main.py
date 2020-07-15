@@ -155,7 +155,6 @@ print('Feature extraction complete')
 models = [SVC(),
           MLPClassifier(),
           DecisionTreeClassifier(),
-          MultinomialNB(),
           KNeighborsClassifier(),
           RandomForestClassifier(),
           GradientBoostingClassifier()]
@@ -163,7 +162,6 @@ models = [SVC(),
 model_names = ['SVM',
                'MLP',
                'DT',
-               'NB',
                'kNN',
                'RF',
                'GB']
@@ -173,7 +171,6 @@ param_SVM = {'SVM__C': np.power(10.0, np.arange(-1.0, 4.0)),
              'SVM__gamma': np.power(10.0, np.arange(-3.0, 1.0))}
 param_MLP = {'MLP__alpha': np.power(10.0, np.arange(-3.0, 1.0))} #'MLP_layers': np.linspace((5,),(100,),5)
 param_DT = {'DT__max_depth': np.arange(1, 20, 2)}
-param_NB = {'NB__alpha': np.arange(1, 10)/100}
 param_kNN = {'kNN__n_neighbors': np.arange(1, 10, 2)}
 param_RF = {'RF__n_estimators': np.arange(100, 500, 200),
             'RF__max_depth': np.arange(1, 20, 2)}
@@ -183,18 +180,22 @@ param_GB = {'GB__learning_rate': np.arange(0.1, 0.5, 0.1),
 parameters = [param_SVM,
               param_MLP,
               param_DT,
-              param_NB,
               param_kNN,
               param_RF,
               param_GB]
 
+#scalers = [MinMaxScaler(),
+#           MinMaxScaler(),
+#           MinMaxScaler(),
+#           MinMaxScaler(),
+#           MinMaxScaler(),
+#           MinMaxScaler()]
 scalers = [StandardScaler(),
            StandardScaler(),
            StandardScaler(),
-           MinMaxScaler(),
            StandardScaler(),
            StandardScaler(),
-           StandardScaler()]
+           StandardScaler(),]
 
 idx = 0
 bestEstimators = []
@@ -219,29 +220,29 @@ for X_trn_data, y_trn_data, X_tst_data, y_tst_data in zip(all_X_trn, all_y_trn, 
         print('')
         print(model_name + ' accuracy = %3.2f' %(score))
         print(grid.best_params_)
-        print('precision, recall, fscore = ')
+        print('precision, recall, fscore = '
         print(precision_recall_fscore_support(y_tst_data, y_tst_predict, average='macro'))
         
-        plotLearningCurve(grid.best_estimator_, X_trn_data, y_trn_data, cv, model_name)        
+        #plotLearningCurve(grid.best_estimator_, X_trn_data, y_trn_data, cv, model_name)        
         plotConfMatrix(y_tst_data, y_tst_predict, model_name)
         bestEstimators.append(grid.best_estimator_) # Save the best estimator from each model
         
 #%%        
 # Plot each model's best ROC curve for each feature set
-idx = 0
-fig, ax = plt.subplots(figsize=(18,8))
-plt.grid()
-
-for X_trn_data, y_trn_data, X_tst_data, y_tst_data in zip(all_X_trn, all_y_trn, all_X_tst, all_y_tst):
-    plt.subplot(1,2,idx+1)
-    for estimator, model_name in zip(bestEstimators, model_names):    
-        plotROCCurve(estimator, X_trn_data, y_trn_data, X_tst_data, y_tst_data, model_name)
-    plt.plot([0, 1], [0, 1], color='navy', lw=4, linestyle='--', alpha=0.7)
-    plt.xlabel('False Positives Rate')
-    plt.ylabel('True Positives Rate')
-    plt.title('ROC curves for feature set ' + str(idx))
-    plt.legend(loc="best")    
-    plt.tight_layout()
-    idx += 1
-plt.show()
+#idx = 0
+#fig, ax = plt.subplots(figsize=(18,8))
+#plt.grid()
+#
+#for X_trn_data, y_trn_data, X_tst_data, y_tst_data in zip(all_X_trn, all_y_trn, all_X_tst, all_y_tst):
+#    plt.subplot(1,2,idx+1)
+#    for estimator, model_name in zip(bestEstimators, model_names):    
+#        plotROCCurve(estimator, X_trn_data, y_trn_data, X_tst_data, y_tst_data, model_name)
+#    plt.plot([0, 1], [0, 1], color='navy', lw=4, linestyle='--', alpha=0.7)
+#    plt.xlabel('False Positives Rate')
+#    plt.ylabel('True Positives Rate')
+#    plt.title('ROC curves for feature set ' + str(idx))
+#    plt.legend(loc="best")    
+#    plt.tight_layout()
+#    idx += 1
+#plt.show()
 
