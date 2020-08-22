@@ -12,28 +12,28 @@ X_featureset_1 = [] #featureset 1 is the mean MFCCs and variance
 y = []
 
 
-X_train_0 = pd.read_csv("X_train_0")
+X_train_0 = pd.read_csv("csv/X_train_0.csv")
 X_featureset_0.append(X_train_0)
 
-X_train_1 = pd.read_csv("X_train_1")
+X_train_1 = pd.read_csv("csv/X_train_1.csv")
 X_featureset_1.append(X_train_1)
 
-X_test_0 = pd.read_csv("X_test_0")
+X_test_0 = pd.read_csv("csv/X_test_0.csv")
 X_featureset_0.append(X_test_0)
 
-X_test_1 = pd.read_csv("X_test_1")
+X_test_1 = pd.read_csv("csv/X_test_1.csv")
 X_featureset_1.append(X_test_1)
 
-y_train_0 = pd.read_csv("y_train_0")
+y_train_0 = pd.read_csv("csv/y_train_0.csv")
 y.append(y_train_0)
 
-y_train_1 = pd.read_csv("y_train_1")
+y_train_1 = pd.read_csv("csv/y_train_1.csv")
 y.append(y_train_1)
 
-y_test_0 = pd.read_csv("y_test_0")
+y_test_0 = pd.read_csv("csv/y_test_0.csv")
 y.append(y_test_0)
 
-y_test_1 = pd.read_csv("y_test_1")
+y_test_1 = pd.read_csv("csv/y_test_1.csv")
 y.append(y_test_1)
 
 
@@ -88,7 +88,9 @@ for df in X_featureset_0:
         for i in range(len(df.columns)):
             fig.add_subplot(3,4, i+1)
             sns.kdeplot(df['MFCC_'+str(i)], shade=True)
-plt.legend(['train','test'])
+            plt.xlabel('MFCC_'+str(i))
+            plt.legend(['train','test'])
+
 plt.tight_layout()
 
 # Feature set 1
@@ -98,8 +100,12 @@ for df in X_featureset_1:
         fig.add_subplot(4,6, i+1)
         if(i < 12):
             sns.kdeplot(df['MFCC_'+str(i)], shade=True)
+            plt.xlabel('MFCC_'+str(i))
         else:
             sns.kdeplot(df['MFCC_var_'+str(i-12)], shade=True)
+            plt.xlabel('MFCC_var_'+str(i-12))
+        plt.legend(['train','test'])
+        
         plt.tight_layout()
         
 
@@ -111,6 +117,7 @@ for df in X_featureset_1:
 # target distribution roughly the same
 for y_data in y:
     sns.distplot(y_data)
+
     
     
 #%%
@@ -153,10 +160,12 @@ X_test_1_drop = X_test_1.drop(columns=['MFCC_10', 'MFCC_var_10'])
 
 #%%
 # write to csv
-X_train_0_drop.to_csv("X_train_0_drop", index=False)
-X_train_1_drop.to_csv("X_train_1_drop", index=False)
-X_test_0_drop.to_csv("X_test_0_drop", index=False)
-X_test_1_drop.to_csv("X_test_1_drop", index=False)
+directory = 'csv'
+
+X_train_0_drop.to_csv(directory + '/' + "X_train_0_drop.csv", index=False)
+X_train_1_drop.to_csv(directory + '/' + "X_train_1_drop.csv", index=False)
+X_test_0_drop.to_csv(directory + '/' + "X_test_0_drop.csv", index=False)
+X_test_1_drop.to_csv(directory + '/' + "X_test_1_drop.csv", index=False)
 
 #%%
 # Perform feature scaling with the models in the pipeline

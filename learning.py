@@ -30,35 +30,35 @@ all_y_tst = []
 
 ## Load the data
 
-X_train_0 = pd.read_csv("X_train_0")
+X_train_0 = pd.read_csv("csv/X_train_0.csv")
 all_X_trn.append(X_train_0)
 
 
-X_train_1 = pd.read_csv("X_train_1")
+X_train_1 = pd.read_csv("csv/X_train_1.csv")
 all_X_trn.append(X_train_1)
 
 
-X_test_0 = pd.read_csv("X_test_0")
+X_test_0 = pd.read_csv("csv/X_test_0.csv")
 all_X_tst.append(X_test_0)
 
 
-X_test_1 = pd.read_csv("X_test_1")
+X_test_1 = pd.read_csv("csv/X_test_1.csv")
 all_X_tst.append(X_test_1)
 
 
-y_train_0 = pd.read_csv("y_train_0")
+y_train_0 = pd.read_csv("csv/y_train_0.csv")
 y_train_0 = (y_train_0.to_numpy()).reshape(len((y_train_0),))
 all_y_trn.append(y_train_0)
 
-y_train_1 = pd.read_csv("y_train_1")
+y_train_1 = pd.read_csv("csv/y_train_1.csv")
 y_train_1 = (y_train_1.to_numpy()).reshape(len((y_train_1),))
 all_y_trn.append(y_train_1)
 
-y_test_0 = pd.read_csv("y_test_0")
+y_test_0 = pd.read_csv("csv/y_test_0.csv")
 y_test_0 = (y_test_0.to_numpy()).reshape(len((y_test_0),))
 all_y_tst.append(y_test_0)
 
-y_test_1 = pd.read_csv("y_test_1")
+y_test_1 = pd.read_csv("csv/y_test_1.csv")
 y_test_1 = (y_test_1.to_numpy()).reshape(len((y_test_1),))
 all_y_tst.append(y_test_1)
 
@@ -74,39 +74,39 @@ all_y_tst.append(y_test_1)
 #
 #
 ## Rename column titles and add everything to a list called data
-#X_train_0 = pd.read_csv("X_train_0_drop")
+#X_train_0 = pd.read_csv("csv/X_train_0_drop.csv")
 ##X_train_0 = X_train_0.to_numpy()
 #all_X_trn.append(X_train_0)
 #
 #
-#X_train_1 = pd.read_csv("X_train_1_drop")
+#X_train_1 = pd.read_csv("csv/X_train_1_drop.csv")
 ##X_train_1 = X_train_1.to_numpy()
 #all_X_trn.append(X_train_1)
 #
 #
-#X_test_0 = pd.read_csv("X_test_0_drop")
+#X_test_0 = pd.read_csv("csv/X_test_0_drop.csv")
 ##X_test_0 = X_test_0.to_numpy()
 #all_X_tst.append(X_test_0)
 #
 #
-#X_test_1 = pd.read_csv("X_test_1_drop")
+#X_test_1 = pd.read_csv("csv/X_test_1_drop.csv")
 ##X_test_1 = X_test_1.to_numpy()
 #all_X_tst.append(X_test_1)
 #
 #
-#y_train_0 = pd.read_csv("y_train_0")
+#y_train_0 = pd.read_csv("csv/y_train_0.csv")
 #y_train_0 = (y_train_0.to_numpy()).reshape(len((y_train_0),))
 #all_y_trn.append(y_train_0)
 #
-#y_train_1 = pd.read_csv("y_train_1")
+#y_train_1 = pd.read_csv("csv/y_train_1.csv")
 #y_train_1 = (y_train_1.to_numpy()).reshape(len((y_train_1),))
 #all_y_trn.append(y_train_1)
 #
-#y_test_0 = pd.read_csv("y_test_0")
+#y_test_0 = pd.read_csv("csv/y_test_0.csv")
 #y_test_0 = (y_test_0.to_numpy()).reshape(len((y_test_0),))
 #all_y_tst.append(y_test_0)
 #
-#y_test_1 = pd.read_csv("y_test_1")
+#y_test_1 = pd.read_csv("csv/y_test_1.csv")
 #y_test_1 = (y_test_1.to_numpy()).reshape(len((y_test_1),))
 #all_y_tst.append(y_test_1)
 
