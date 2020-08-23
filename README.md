@@ -1,7 +1,7 @@
 # Instrument/Timbre Classification using Machine Learning
 
 ## Introduction
-Audio-based instrument classifier that identifies an instrument based on its timbre given a short sample of music. Various machine learning algorithms from the scikit-learn library were used to classify the recordings.
+Audio-based instrument classifier that identifies an instrument based on its timbre given a short sample of music. Various machine learning algorithms from the scikit-learn library were used to classify the recordings. This is a multiclass supervised learning classification.
 
 ## Technologies
 * Python: 3.7.4
